@@ -69,25 +69,29 @@ public abstract class BaseVerifier implements Verifier {
 
         customize(params);
 
-        // the connector must support ping check if its verifiable
-        List<VerifierResponse> resp = new ArrayList<VerifierResponse>();
+        List<VerifierResponse> resp = new ArrayList<>();
+        // Verify for all scopes
         for (Verifier.Scope scope :  Verifier.Scope.values()) {
             ComponentVerifier.Result result = verifier.verify(toComponentScope(scope), params);
             resp.add(toVerifierResponse(result));
-            log.info("PING: {} === {}",
-                     getConnectorAction(), result.getStatus());
-            if (result.getStatus() == ComponentVerifier.Result.Status.ERROR) {
-                log.error("{} --> ", getConnectorAction());
-                for (ComponentVerifier.VerificationError error : result.getErrors()) {
-                    log.error("   {} : {}", error.getCode(), error.getDescription());
-                }
-            }
+            logResult(result);
+            // the connector must support ping check if its verifiable
             if (result.getStatus() == ComponentVerifier.Result.Status.ERROR ||
                 result.getStatus() == ComponentVerifier.Result.Status.UNSUPPORTED) {
                 break;
             }
         }
         return resp;
+    }
+
+    private void logResult(ComponentVerifier.Result result) {
+        log.info("PING: {} === {}", getConnectorAction(), result.getStatus());
+        if (result.getStatus() == ComponentVerifier.Result.Status.ERROR) {
+            log.error("{} --> ", getConnectorAction());
+            for (ComponentVerifier.VerificationError error : result.getErrors()) {
+                log.error("   {} : {}", error.getCode(), error.getDescription());
+            }
+        }
     }
 
     // Hook for customizing params

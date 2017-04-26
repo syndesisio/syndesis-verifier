@@ -28,7 +28,6 @@ import org.springframework.stereotype.Component;
 @ApplicationPath("/api/v1")
 @Component
 public class V1 extends Application {
-
     public V1() {
         BeanConfig beanConfig = new BeanConfig();
         beanConfig.setVersion("v1");

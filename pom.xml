@@ -38,13 +38,21 @@
     <swagger.version>1.5.12</swagger.version>
     <resteasy-spring-boot-starter.version>2.3.0-RELEASE</resteasy-spring-boot-starter.version>
     <jackson.version>2.8.7</jackson.version>
-    <fabric8-maven-plugin.version>3.3.0</fabric8-maven-plugin.version>
-    <license-maven-plugin.version>3.0</license-maven-plugin.version>
     <redhat-ipaas-connector.version>0.3.7</redhat-ipaas-connector.version>
+
+    <fabric8-maven-plugin.version>3.3.0</fabric8-maven-plugin.version>
+    <docker-maven-plugin.version>0.20.1</docker-maven-plugin.version>
+    <license-maven-plugin.version>3.0</license-maven-plugin.version>
+    <swagger-maven-plugin.version>1.0.0</swagger-maven-plugin.version>
+    <swagger2markup-maven-plugin.version>1.1.0</swagger2markup-maven-plugin.version>
+
+    <apidocs.dir>${project.build.directory}/api-docs</apidocs.dir>
+    <apidocs.schema.dir>${project.build.outputDirectory}/static</apidocs.schema.dir>
+
     <!-- Base image to use for Docker images. Pinned to 1.2.3 since 1.2.4 has issues because
          of Java 1.8.0_121 (1.2.3 is running 1.8.0_111) -->
     <java-image>fabric8/java-jboss-openjdk8-jdk:1.2.3</java-image>
-
+    <verifier-image>rhipaas/ipaas-verifier:%l</verifier-image>
   </properties>
 
   <inceptionYear>2017</inceptionYear>
@@ -312,15 +320,101 @@
         <artifactId>fabric8-maven-plugin</artifactId>
         <version>${fabric8-maven-plugin.version}</version>
         <configuration>
+          <mode>kubernetes</mode>
           <generator>
             <config>
               <spring-boot>
-                <name>rhipaas/ipaas-verifier:%l</name>
+                <name>${verifier-image}</name>
                 <from>${java-image}</from>
               </spring-boot>
           </config>
           </generator>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>${docker-maven-plugin.version}</version>
+        <configuration>
+          <images>
+            <image>
+              <name>${verifier-image}</name>
+              <alias>verfier</alias>
+              <run>
+                <ports>
+                  <port>8080:8080</port>
+                </ports>
+              </run>
+            </image>
+          </images>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>dk.nykredit.swagger</groupId>
+        <artifactId>swagger-maven-plugin</artifactId>
+        <version>${swagger-maven-plugin.version}</version>
+        <configuration>
+          <outputDirectory>${apidocs.schema.dir}</outputDirectory>
+          <outputFormats>
+            <outputFormat>JSON</outputFormat>
+            <outputFormat>YAML</outputFormat>
+          </outputFormats>
+          <attachSwaggerArtifact>true</attachSwaggerArtifact>
+          <resourcePackages>
+            <resourcePackage>com.redhat.ipaas.verifier.v1</resourcePackage>
+          </resourcePackages>
+          <swaggerConfig>
+            <info>
+              <title>Red Hat iPaaS Verifier API</title>
+              <version>v1</version>
+              <description>
+                The Red Hat iPaaS Verifier API sole purpose is to verify connection parameters for the endpoints of certain connectors.
+              </description>
+              <license>
+                <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+                <name>Apache 2.0</name>
+              </license>
+              <contact>
+                <email>ipaas-dev@redhat.com</email>
+                <name>The Red Hat iPaaS Developers</name>
+                <url>https://redhat-ipaas.github.io</url>
+              </contact>
+            </info>
+            <schemes>http,https</schemes>
+            <host>localhost:8080</host>
+            <basePath>/api/v1</basePath>
+          </swaggerConfig>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.github.swagger2markup</groupId>
+        <artifactId>swagger2markup-maven-plugin</artifactId>
+        <version>${swagger2markup-maven-plugin.version}</version>
+        <configuration>
+          <swaggerInput>${apidocs.schema.dir}/swagger.json</swaggerInput>
+          <outputDir>${apidocs.dir}/asciidoc</outputDir>
+          <config>
+            <swagger2markup.markupLanguage>ASCIIDOC</swagger2markup.markupLanguage>
+          </config>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>convertSwagger2markup</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
 
     </plugins>

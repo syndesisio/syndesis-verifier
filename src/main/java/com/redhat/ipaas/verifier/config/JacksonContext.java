@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.redhat.ipaas.verifier;
+package com.redhat.ipaas.verifier.config;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -29,10 +29,10 @@ import org.springframework.stereotype.Component;
 
 @Provider
 @Component
-public class JacksonContextResolver implements ContextResolver<ObjectMapper> {
+public class JacksonContext implements ContextResolver<ObjectMapper> {
     private ObjectMapper objectMapper;
 
-    public JacksonContextResolver() throws Exception {
+    public JacksonContext() throws Exception {
         this.objectMapper = new ObjectMapper()
             .registerModule(new Jdk8Module())
             .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)

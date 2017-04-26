@@ -20,6 +20,8 @@ import java.util.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
+ * A verification response.
+ *
  * @author roland
  * @since 20/03/2017
  */
