@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 Red Hat, Inc.
+ * Copyright (C) 2017 Red Hat, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import com.redhat.ipaas.verifier.*;
+import io.swagger.annotations.Api;
 import org.springframework.stereotype.Component;
 
 @Component
 @Path("/verifier")
+@Api(value = "verifier")
 public class VerifierEndpoint {
 
     private VerifierRegistry verifierRegistry;
@@ -72,7 +74,8 @@ public class VerifierEndpoint {
     private VerifierResponse createUnsupportedResponse(String connectorId) {
         return new VerifierResponse.Builder(Verifier.Status.UNSUPPORTED,
                                             Verifier.Scope.PARAMETERS)
-            .error("unknown-connector", String.format("No connector for ID %s registered", connectorId))
+            .error("unknown-connector",
+                   String.format("No connector for ID %s registered", connectorId))
             .build();
     }
 }

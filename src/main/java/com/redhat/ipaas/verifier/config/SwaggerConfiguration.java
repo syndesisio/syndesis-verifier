@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2017 Red Hat, Inc.
+ * Copyright (C) 2016 Red Hat, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.redhat.ipaas.verifier.impl;
+package com.redhat.ipaas.verifier.config;
 
-import org.springframework.stereotype.Component;
+import io.swagger.jaxrs.listing.ApiListingResource;
+import io.swagger.jaxrs.listing.SwaggerSerializers;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-/**
- * @author roland
- * @since 28/03/2017
- */
-@Component("http")
-public class HttpVerifier extends BaseVerifier {
-    protected String getConnectorAction() {
-        return "http-get";
+@Configuration
+public class SwaggerConfiguration {
+
+    @Bean
+    public ApiListingResource apiListingResource() {
+        return new ApiListingResource();
     }
+
+    @Bean
+    public SwaggerSerializers swaggerSerializers() {
+        return new SwaggerSerializers();
+    }
+
 }

@@ -1,6 +1,22 @@
+/**
+ * Copyright (C) 2017 Red Hat, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.redhat.ipaas.verifier.impl;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -41,6 +57,7 @@ public abstract class BaseVerifier implements Verifier {
         camel.stop();
     }
 
+    // The concrete action call
     protected abstract String getConnectorAction();
 
     // ========================================================
@@ -52,25 +69,29 @@ public abstract class BaseVerifier implements Verifier {
 
         customize(params);
 
-        // the connector must support ping check if its verifiable
-        List<VerifierResponse> resp = new ArrayList<VerifierResponse>();
+        List<VerifierResponse> resp = new ArrayList<>();
+        // Verify for all scopes
         for (Verifier.Scope scope :  Verifier.Scope.values()) {
             ComponentVerifier.Result result = verifier.verify(toComponentScope(scope), params);
             resp.add(toVerifierResponse(result));
-            log.info("PING: {} === {}",
-                     getConnectorAction(), result.getStatus());
-            if (result.getStatus() == ComponentVerifier.Result.Status.ERROR) {
-                log.error("{} --> ", getConnectorAction());
-                for (ComponentVerifier.Error error : result.getErrors()) {
-                    log.error("   {} : {}", error.getCode(), error.getDescription());
-                }
-            }
+            logResult(result);
+            // the connector must support ping check if its verifiable
             if (result.getStatus() == ComponentVerifier.Result.Status.ERROR ||
                 result.getStatus() == ComponentVerifier.Result.Status.UNSUPPORTED) {
                 break;
             }
         }
         return resp;
+    }
+
+    private void logResult(ComponentVerifier.Result result) {
+        log.info("PING: {} === {}", getConnectorAction(), result.getStatus());
+        if (result.getStatus() == ComponentVerifier.Result.Status.ERROR) {
+            log.error("{} --> ", getConnectorAction());
+            for (ComponentVerifier.VerificationError error : result.getErrors()) {
+                log.error("   {} : {}", error.getCode(), error.getDescription());
+            }
+        }
     }
 
     // Hook for customizing params
@@ -101,14 +122,22 @@ public abstract class BaseVerifier implements Verifier {
             new VerifierResponse.Builder(result.getStatus().name(),
                                          result.getScope().name());
         if (result.getErrors() != null) {
-            for (ComponentVerifier.Error error : result.getErrors()) {
-                builder.withError(error.getCode())
+            for (ComponentVerifier.VerificationError error : result.getErrors()) {
+                builder.withError(error.getCode().getName())
                          .description(error.getDescription())
-                         .parameters(error.getParameters())
-                         .attributes(error.getAttributes())
+                         .parameters(error.getParameterKeys())
+                         .attributes(convertToStringKeyedMap(error.getDetails()))
                        .endError();
             }
         }
         return builder.build();
+    }
+
+    private Map<String, Object> convertToStringKeyedMap(Map<ComponentVerifier.VerificationError.Attribute, Object> details) {
+        return details != null ?
+            details.entrySet()
+                   .stream()
+                   .collect(Collectors.toMap(k -> k.getKey().name(), Map.Entry::getValue)) :
+            null;
     }
 }

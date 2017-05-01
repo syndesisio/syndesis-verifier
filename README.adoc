@@ -3,7 +3,7 @@
 This project offers the online verification of https://github.com/redhat-ipaas/connectors[Camel Connectors]. It provides a single Endpoint
 
 ```
-/verify
+/api/v1/verifier
 ```
 
 which take connector specific parameters as input and returns the result of the verification.
@@ -25,3 +25,16 @@ It's meant to be used in a synchronous flow.
 ### Implementation Notes
 
 In the initial version of this service the supported Camel Connectors (Twitter Mention, Salesforce Upsert, Http Get) are called directly from the same JVM in order to perform the validation. In a next step, these connectors are extracted into dedicated Pods which are managed and pooled and called from this Verifier Service on demand. More on this later ...
+
+### Running it
+
+#### Local
+
+For local development purpose the container can be started directly from a Docker container
+
+[source, bash]
+----
+mvn package fabric8:build docker:start docker:watch
+----
+
+This will rebuild and restart your application every time you recompile the code.
