@@ -11,7 +11,7 @@ import org.apache.camel.component.extension.MetaDataExtension.MetaData;
  * Converting metadata to applicable properties is specific to each connector,
  * this adapter converts Camel {@link MetaDataExtension.MetaData} to a Map keyed
  * by action property name with a list of {@link PropertyPair} values that are
- * applicable to for that property. {@link #apply(Map, MetaData)} method will
+ * applicable to for that property. BiFunction#apply(T, U) method will
  * receive all properties that client specified and the retrieved
  * {@link MetaDataExtension.MetaData} from the appropriate Camel
  * {@link MetaDataExtension}.
