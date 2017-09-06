@@ -15,27 +15,27 @@
  */
 package io.syndesis.verifier.v1;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
-import io.syndesis.verifier.v1.metadata.PropertyPair;
+import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
+
+import io.syndesis.verifier.v1.metadata.MetadataAdapter;
+import io.syndesis.verifier.v1.metadata.MetadataAdapter.SchemaUse;
 
 import org.apache.camel.impl.DefaultCamelContext;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ActionPropertiesEndpointTest {
-
+public class ActionShapesEndpointTest {
     private static final Map<String, String> PAYLOAD = Collections.singletonMap("this", "is playload");
 
-    private static final Map<String, List<PropertyPair>> PROPERTIES = Collections.singletonMap("property",
-        Arrays.asList(new PropertyPair("value1", "First Value"), new PropertyPair("value2", "Second Value")));
+    private static final Map<MetadataAdapter.SchemaUse, ObjectSchema> SCHEMAS = new HashMap<>();
 
-    private final ActionPropertiesEndpoint endpoint = new ActionPropertiesEndpoint(
-        Collections.singletonMap("petstore-adapter", new PetstoreAdapter(PAYLOAD, PROPERTIES, null))) {
+    private final ActionShapesEndpoint endpoint = new ActionShapesEndpoint(
+        Collections.singletonMap("petstore-adapter", new PetstoreAdapter(PAYLOAD, null, SCHEMAS))) {
         @Override
         protected DefaultCamelContext camelContext() {
             final DefaultCamelContext camelContext = new DefaultCamelContext();
@@ -46,9 +46,9 @@ public class ActionPropertiesEndpointTest {
     };
 
     @Test
-    public void shouldProvideActionShapesBasedOnMetadata() throws Exception {
-        final Map<String, List<PropertyPair>> properties = endpoint.properties("petstore", Collections.emptyMap());
+    public void shouldProvideActionPropertiesBasedOnMetadata() throws Exception {
+        final Map<SchemaUse, ObjectSchema> shapes = endpoint.shape("petstore", Collections.emptyMap());
 
-        assertThat(properties).isSameAs(PROPERTIES);
+        assertThat(shapes).isSameAs(SCHEMAS);
     }
 }
