@@ -37,24 +37,36 @@ public final class SalesforceMetadataAdapter implements MetadataAdapter {
     private static final String UNIQUE_PROPERTY = "sObjectIdName";
 
     @Override
-    public Map<String, List<PropertyPair>> apply(final Map<String, Object> properties, final MetaData metaData) {
-        final String scope = (String) metaData.getAttribute("scope");
+    public Map<String, List<PropertyPair>> adaptForProperties(final Map<String, Object> properties,
+        final MetaData metadata) {
+        final String scope = (String) metadata.getAttribute("scope");
 
         if ("object".equals(scope)) {
-            return adaptForObjectRequest(properties, metaData);
+            return adaptForObjectRequest(properties, metadata);
         } else if ("object_types".equals(scope)) {
-            return adaptForObjectTypeRequest(properties, metaData);
+            return adaptForObjectTypeRequest(properties, metadata);
         }
 
         throw new IllegalStateException(
             "Unknown or missing `scope` attribute in Salesforce MetaData, scope is: " + scope);
     }
 
+    @Override
+    public Map<SchemaUse, ObjectSchema> adaptForSchema(final Map<String, Object> properties, final MetaData metadata) {
+        final ObjectSchema schema = objectSchemaFrom(metadata.getPayload(ObjectSchema.class));
+
+        final HashMap<SchemaUse, ObjectSchema> ret = new HashMap<>(2);
+        ret.put(SchemaUse.INPUT, schema);
+        ret.put(SchemaUse.OUTPUT, schema);
+
+        return ret;
+    }
+
     static Map<String, List<PropertyPair>> adaptForObjectRequest(final Map<String, Object> properties,
-        final MetaData metaData) {
+        final MetaData metadata) {
         final Map<String, List<PropertyPair>> ret = new HashMap<>();
 
-        final ObjectSchema schema = objectSchemaFrom(metaData.getPayload(ObjectSchema.class));
+        final ObjectSchema schema = objectSchemaFrom(metadata.getPayload(ObjectSchema.class));
         if (properties.containsKey(UNIQUE_PROPERTY)) {
             final List<PropertyPair> uniquePropertyPairs = schema.getProperties().entrySet().stream()
                 .filter(e -> isIdLookup(e.getValue()))
@@ -67,8 +79,8 @@ public final class SalesforceMetadataAdapter implements MetadataAdapter {
     }
 
     static Map<String, List<PropertyPair>> adaptForObjectTypeRequest(final Map<String, Object> properties,
-        final MetaData metaData) {
-        final JsonNode payload = metaData.getPayload(JsonNode.class);
+        final MetaData metadata) {
+        final JsonNode payload = metadata.getPayload(JsonNode.class);
 
         final List<PropertyPair> objects = StreamSupport.stream(payload.spliterator(), false)
             .map(SalesforceMetadataAdapter::createObjectPairPropertyFromNode).collect(Collectors.toList());

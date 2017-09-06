@@ -28,6 +28,8 @@ import com.fasterxml.jackson.module.jsonSchema.types.NumberSchema;
 import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
 import com.fasterxml.jackson.module.jsonSchema.types.StringSchema;
 
+import io.syndesis.verifier.v1.metadata.MetadataAdapter.SchemaUse;
+
 import org.apache.camel.CamelContext;
 import org.apache.camel.component.extension.metadata.MetaDataBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -43,8 +45,9 @@ public class SalesforceMetadataAdapterTest {
 
     private final SalesforceMetadataAdapter adapter = new SalesforceMetadataAdapter();
 
-    @Test
-    public void shouldAdaptObjectMetadata() throws IOException {
+    private final ObjectSchema payload;
+
+    public SalesforceMetadataAdapterTest() {
         final Map<String, JsonSchema> objectProperties = new HashMap<>();
         objectProperties.put("simpleProperty", new StringSchema());
         objectProperties.put("anotherProperty", new NumberSchema());
@@ -64,14 +67,17 @@ public class SalesforceMetadataAdapterTest {
         objectSchema.setId("urn:jsonschema:org:apache:camel:component:salesforce:dto:SimpleObject");
         objectSchema.setProperties(objectProperties);
 
-        final ObjectSchema payload = new ObjectSchema();
+        payload = new ObjectSchema();
         payload.setOneOf(Collections.singleton(objectSchema));
+    }
 
+    @Test
+    public void shouldAdaptObjectMetadataForProperties() {
         final Map<String, Object> properties = new HashMap<>();
         properties.put("sObjectName", "SimpleObject");
         properties.put("sObjectIdName", null);
 
-        final Map<String, List<PropertyPair>> adapted = adapter.apply(properties,
+        final Map<String, List<PropertyPair>> adapted = adapter.adaptForProperties(properties,
             MetaDataBuilder.on(CONTEXT).withAttribute("scope", "object").withPayload(payload).build());
 
         assertThat(adapted).containsKey("sObjectIdName");
@@ -83,11 +89,25 @@ public class SalesforceMetadataAdapterTest {
     }
 
     @Test
-    public void shouldAdaptObjectTypesMetadata() throws IOException {
+    public void shouldAdaptObjectMetadataForSchema() {
+        final Map<String, Object> properties = new HashMap<>();
+        properties.put("sObjectName", "SimpleObject");
+
+        final Map<SchemaUse, ObjectSchema> adapted = adapter.adaptForSchema(properties,
+            MetaDataBuilder.on(CONTEXT).withAttribute("scope", "object").withPayload(payload).build());
+
+        assertThat(adapted).containsKeys(SchemaUse.INPUT, SchemaUse.OUTPUT);
+        assertThat(adapted.get(SchemaUse.INPUT)).isSameAs(adapted.get(SchemaUse.OUTPUT));
+        final Object oneOf = payload.getOneOf().iterator().next();
+        assertThat(adapted.get(SchemaUse.INPUT)).isSameAs(oneOf);
+    }
+
+    @Test
+    public void shouldAdaptObjectTypesMetadataForProperties() throws IOException {
         final JsonNode payload = new ObjectMapper().readTree(
             "[{\"name\":\"Object1\",\"label\":\"Object1 Label\"},{\"name\":\"Object2\",\"label\":\"Object2 Label\"}]");
 
-        final Map<String, List<PropertyPair>> adapted = adapter.apply(NOT_USED,
+        final Map<String, List<PropertyPair>> adapted = adapter.adaptForProperties(NOT_USED,
             MetaDataBuilder.on(CONTEXT).withAttribute("scope", "object_types").withPayload(payload).build());
 
         assertThat(adapted).containsKey("sObjectName");

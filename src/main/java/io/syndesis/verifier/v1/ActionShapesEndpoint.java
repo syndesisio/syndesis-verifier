@@ -15,7 +15,6 @@
  */
 package io.syndesis.verifier.v1;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
@@ -25,28 +24,30 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
+
 import io.syndesis.verifier.v1.metadata.MetadataAdapter;
-import io.syndesis.verifier.v1.metadata.PropertyPair;
+import io.syndesis.verifier.v1.metadata.MetadataAdapter.SchemaUse;
 
 import org.springframework.stereotype.Component;
 
 @Component
-@Path("/action/properties")
-public class ActionPropertiesEndpoint extends MetadataEndpoint<Map<String, List<PropertyPair>>> {
+@Path("/action/shapes")
+public class ActionShapesEndpoint extends MetadataEndpoint<Map<MetadataAdapter.SchemaUse, ObjectSchema>> {
 
-    public ActionPropertiesEndpoint(final Map<String, MetadataAdapter> adapters) {
+    public ActionShapesEndpoint(final Map<String, MetadataAdapter> adapters) {
         super(adapters);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/{id}")
-    public Map<String, List<PropertyPair>> properties(@PathParam("id") final String connectorId,
+    @Path("/{connectorId}")
+    public Map<SchemaUse, ObjectSchema> shape(@PathParam("connectorId") final String connectorId,
         final Map<String, Object> properties) throws Exception {
         final MetadataAdapter adapter = adapterFor(connectorId);
 
-        return fetchMetadata(connectorId, properties, adapter::adaptForProperties);
+        return fetchMetadata(connectorId, properties, adapter::adaptForSchema);
     }
 
 }
