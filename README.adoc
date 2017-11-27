@@ -1,3 +1,12 @@
+---------
+# Repository has been moved
+
+**This repository is not longer active and has been moved to https://github.com/syndesisio/syndesis (code & issues)**
+
+----------
+
+
+
 ### Syndesis Verifier Service
 
 This project offers the online verification of https://github.com/syndesisio/connectors[Camel Connectors]. It provides a single Endpoint
